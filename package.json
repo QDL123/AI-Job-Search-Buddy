@@ -1,0 +1,26 @@
+{
+  "name": "job_listing_analyzer",
+  "version": "1.0.0",
+  "description": "Pull job listings from RSS feeds, analyze how good of a match they are for the candidate and rank them, send an email to the candidate with the results.",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "RSS",
+    "LLM",
+    "AI",
+    "jobs"
+  ],
+  "author": "Quintin Leary",
+  "license": "ISC",
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.1",
+    "axios": "^1.6.7",
+    "bluebird": "^3.7.2",
+    "dotenv": "^16.4.5",
+    "lodash": "^4.17.21",
+    "openai": "^4.28.4",
+    "rss-parser": "^3.13.0"
+  }
+}
