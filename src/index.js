@@ -15,39 +15,48 @@ sgMail.setApiKey(process.env['SENDGRID_API_KEY']);
 
 const parser = new Parser();
 const rss_urls = [
-    "https://www.google.com/alerts/feeds/04534337928605833163/3244402253473668538"
+    "https://www.google.com/alerts/feeds/04534337928605833163/3244402253473668538",
+    "https://www.google.com/alerts/feeds/04534337928605833163/14066324556540978014",
+    "https://www.google.com/alerts/feeds/04534337928605833163/9686734772594381347"
 ];
 
 async function handler() {
     console.log("Entered Lambda function");
     const feeds = await Promise.map(rss_urls, url => parser.parseURL(url));
+    console.log(JSON.stringify(feeds, null, 2));
     const links = _.map(_.flatMap(feeds, feed => feed.items), item => item.link);
 
     console.log(`Number of links from feeds: ${links.length}`);
-    const linkString = links.join(',\n');
 
-    const chatCompletion = await openai.chat.completions.create({
-        messages: [
-            {
-                role: 'system',
-                content: 'You are a job listing analyzer AI. You extract information from job listings, filter them down, and summarize your findings.',
-            },
-            {
-                role: 'user',
-                content: process.env.PROMPT + linkString,
-            }
-        ],
-        model: process.env.MODEL,
-    });
-
-    console.log(`Got AI response: ${chatCompletion.choices[0].message.content}`);
-
-    const msg = {
+    let msg = {
         to: process.env.RECIPIENT,
         from: process.env.SENDER,
         subject: "AI Job Search Buddy Report",
-        text: chatCompletion.choices[0].message.content,
     };
+    
+    if (links.length === 0) {
+        msg.text = "No new job postings today!";
+    } else {
+        const linkString = links.join(',\n');
+    
+        const chatCompletion = await openai.chat.completions.create({
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a job listing analyzer AI. You extract information from job listings, filter them down, and summarize your findings.',
+                },
+                {
+                    role: 'user',
+                    content: process.env.PROMPT + linkString,
+                }
+            ],
+            model: process.env.MODEL,
+        });
+    
+        console.log(`Got AI response: ${chatCompletion.choices[0].message.content}`);
+    
+        msg.text = chatCompletion.choices[0].message.content;
+    }
 
     try {
         await sgMail.send(msg);
